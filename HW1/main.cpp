@@ -107,6 +107,6 @@ int main(int argc, char *argv[]){
   Line2D l5 = Line2D(1,-1,0);
   printf("The reflection of the point p15 about the line l5 is %s (should be (3,0))\n",string(reflect(p15,l5)).c_str());
 
-  Line2D l7 = Line2D(1,0,0);
+  Line2D l7 = Line2D(-4,1,0);
   printf("The reflection of the line l7 about the line l5 is %s (should be y=0)\n",string(reflect(l7,l5)).c_str());
 }

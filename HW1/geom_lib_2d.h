@@ -71,6 +71,8 @@ float angle(Line2D l1, Line2D l2) {
 //Compute if the line segment p1->p2 intersects the line segment a->b
 //The result is a boolean
 bool segmentSegmentIntersect(Point2D p1, Point2D p2, Point2D a, Point2D b) {
+  
+
   return false; //Wrong, fix me...
 }
 
@@ -84,7 +86,7 @@ bool pointInTriangle(Point2D p, Point2D t1, Point2D t2, Point2D t3) {
 //Compute the area of the triangle t1,t2,t3
 //The result is a scalar
 float areaTriangle(Point2D t1, Point2D t2, Point2D t3) {
-  return 0; //Wrong, fix me...
+  return 0.5f * vee(t1, t2, t3);
 }
 
 //Compute the distance from the point p to the triangle t1,t2,t3 as defined 
@@ -111,13 +113,13 @@ bool isConvex_Quad(Point2D p1, Point2D p2, Point2D p3, Point2D p4) {
 //Compute the reflection of the point p about the line l
 //The result is a point
 Point2D reflect(Point2D p, Line2D l) {
-  return Point2D(0, 0); //Wrong, fix me...
+  return l * p * l;
 }
 
 //Compute the reflection of the line d about the line l
 //The result is a line
 Line2D reflect(Line2D d, Line2D l) {
-  return Line2D(0, 0, 0); //Wrong, fix me...
+  return l * d * l;
 }
 
 #endif
