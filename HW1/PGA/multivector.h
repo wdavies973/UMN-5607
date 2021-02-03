@@ -12,6 +12,7 @@
 // Resources:
   // - http://www.math.umd.edu/~immortal/MATH431/lecturenotes/ch_geometricalgebra.pdf
   // - https://bivector.net/
+// - https://arxiv.org/pdf/2002.04509.pdf
   // We'll need to know what these operations do in order to use them.
 
 /*

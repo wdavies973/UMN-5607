@@ -71,9 +71,29 @@ float angle(Line2D l1, Line2D l2) {
 //Compute if the line segment p1->p2 intersects the line segment a->b
 //The result is a boolean
 bool segmentSegmentIntersect(Point2D p1, Point2D p2, Point2D a, Point2D b) {
-  
+  // Find the line segment running through the points
+  Line2D l1 = join(p1, p2);
+  Line2D l2 = join(a, b);
 
-  return false; //Wrong, fix me...
+  Point2D intersection = intersect(l1, l2);
+
+  // Check if this point is contained within both line segments.
+  // It's already aligned, so just ensure that the distance between
+  // the endpoints is no greater than the length of the line segment.
+
+  // i.e., make sure the point exists on both segments
+
+  // Uses squared magnitude to speed up calculation by avoiding square roots
+  float l1Mag = (p2 - p1).magnitudeSqr();
+  float l2Mag = (b - a).magnitudeSqr();
+
+  float p1ADist = (intersection - p1).magnitudeSqr();
+  float p1BDist = (p2 - intersection).magnitudeSqr();
+
+  float p2ADist = (intersection - a).magnitudeSqr();
+  float p2BDist = (b - intersection).magnitudeSqr();
+
+  return (p1ADist + p1BDist) <= l1Mag && (p2ADist + p2BDist) <= l2Mag;
 }
 
 //Compute if the point p lies inside the triangle t1,t2,t3
