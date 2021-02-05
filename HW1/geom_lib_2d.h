@@ -100,7 +100,15 @@ bool segmentSegmentIntersect(Point2D p1, Point2D p2, Point2D a, Point2D b) {
 //Your code should work for both clockwise and counterclockwise windings
 //The result is a bool
 bool pointInTriangle(Point2D p, Point2D t1, Point2D t2, Point2D t3) {
-  return false; //Wrong, fix me...
+  Line2D l1 = vee(t1, t2);
+  Line2D l2 = vee(t2, t3);
+  Line2D l3 = vee(t3, t1);
+
+  float f1 = vee(p, l1);
+  float f2 = vee(p, l2);
+  float f3 = vee(p, l3);
+
+  return (f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0);
 }
 
 //Compute the area of the triangle t1,t2,t3
@@ -113,21 +121,39 @@ float areaTriangle(Point2D t1, Point2D t2, Point2D t3) {
 //by it's distance from the edge closest to p.
 //The result is a scalar
 float pointTriangleEdgeDist(Point2D p, Point2D t1, Point2D t2, Point2D t3) {
-  return 0; //Wrong, fix me...
+  Line2D l1 = vee(t1, t2);
+  Line2D l2 = vee(t2, t3);
+  Line2D l3 = vee(t3, t1);
+
+  float f1 = vee(p, l1.normalized());
+  float f2 = vee(p, l2.normalized());
+  float f3 = vee(p, l3.normalized());
+
+  return std::min(std::abs(f1), std::min(std::abs(f2), std::abs(f3)));
 }
 
 //Compute the distance from the point p to the closest of three corners of
 // the triangle t1,t2,t3
 //The result is a scalar
 float pointTriangleCornerDist(Point2D p, Point2D t1, Point2D t2, Point2D t3) {
-  return 0; //Wrong, fix me...
+  float d1 = vee(p, t1).magnitude();
+  float d2 = vee(p, t2).magnitude();
+  float d3 = vee(p, t3).magnitude();
+
+  return std::min(d1, std::min(d2, d3));
 }
 
 //Compute if the quad (p1,p2,p3,p4) is convex.
 //Your code should work for both clockwise and counterclockwise windings
 //The result is a boolean
 bool isConvex_Quad(Point2D p1, Point2D p2, Point2D p3, Point2D p4) {
-  return false; //Wrong, fix me...
+  Line2D l1 = vee(p1, p2);
+  Line2D l2 = vee(p2, p3);
+  Line2D l3 = vee(p3, p4);
+  Line2D l4 = vee(p4, p1);
+
+  return (vee(p3, l1) > 0 && vee(p4, l2) > 0 && vee(p1, l3) > 0)
+    || (vee(p3, l1) < 0 && vee(p4, l2) < 0 && vee(p1, l3) < 0);
 }
 
 //Compute the reflection of the point p about the line l
