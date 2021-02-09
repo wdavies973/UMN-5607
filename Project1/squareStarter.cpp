@@ -66,7 +66,7 @@ Line2D l4 = vee(p4, p1).normalized();
 //Helper variables to track t
 Point2D clicked_pos;
 Point2D clicked_mouse;
-float clicked_angle, clicked_size;
+float clicked_angle, clicked_size = 0;
 
 void mouseClicked(float mx, float my); //Called when mouse is pressed down
 void mouseDragged(float mx, float my); //Called each time the mouse is moved during click
@@ -158,16 +158,43 @@ void mouseClicked(float m_x, float m_y) {
   // Maybe a slightly scaled down polygon for the inner part.
   // How about the corners? Could use the corner test. Check if its beneath some threshold?
 
-  // Check if the click was within the square
+  // Ensure the click occurred within the polygon
   float f1 = vee(clicked_mouse, l1);
   float f2 = vee(clicked_mouse, l2);
   float f3 = vee(clicked_mouse, l3);
   float f4 = vee(clicked_mouse, l4);
 
-  //do_translate = (f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0);
+  if((f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0)) {
+    // Determine which action the user is trying to perform.
+    float d1 = vee(clicked_mouse, p1).magnitude();
+    float d2 = vee(clicked_mouse, p2).magnitude();
+    float d3 = vee(clicked_mouse, p3).magnitude();
+    float d4 = vee(clicked_mouse, p4).magnitude();
 
-  do_rotate = (f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0);
-  do_scale = false;
+    float min = std::min(d1, std::min(d2, std::min(d3, d4)));
+
+    std::cout << "COrner dist" << min << std::endl;
+
+    do_scale = min < 0.1;
+
+    f1 = vee(clicked_mouse, l1.normalized());
+    f2 = vee(clicked_mouse, l2.normalized());
+    f3 = vee(clicked_mouse, l3.normalized());
+    f4 = vee(clicked_mouse, l4.normalized());
+
+    min = std::min(f1, std::min(f2, std::min(f3, f4)));
+
+    std::cout << "Edge dist" << min << std::endl;
+
+    do_rotate = !do_scale && min < 0.1;
+
+    do_translate = !do_scale && !do_rotate;
+  } else {
+    do_scale = do_rotate = do_translate = false;
+  }
+
+  //do_rotate = (f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0);
+  //do_scale = (f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0);
 }
 
 //TODO: Update the position, rotation, or scale based on the mouse movement
@@ -183,32 +210,26 @@ void mouseDragged(float m_x, float m_y) {
   }
 
   if(do_scale) {
-    //Compute the new size, g_size, based on the mouse positions
-    rect_scale = clicked_size; //This is wrong: the scale should grow or shrink based on the mouse movements
+    float s1 = (cur_mouse.x / (clicked_mouse.x / clicked_size)) - clicked_size;
+    float s2 = (cur_mouse.y / (clicked_mouse.y / clicked_size)) - clicked_size;
+
+    float d1 = clicked_mouse.x * clicked_mouse.x + clicked_mouse.y * clicked_mouse.y;
+    float d2 = cur_mouse.x * cur_mouse.x + cur_mouse.y * cur_mouse.y;
+    
+    rect_scale = clicked_size + (d2 - d1);
   }
 
   if(do_rotate) {
-    // Use the line from the center of the polygon to the mouse click, figure out the angle 
-    // between this line and the updated mouse position
-    Line2D start = Line2D(clicked_mouse.x, clicked_mouse.y);
-    Line2D end = Line2D(m_x, m_y);
+    // Find center
+    Point2D center = intersect(vee(p1, p3), vee(p2, p4));
 
-    
-    float a = std::atan2(end.y, end.x);
+    float a = std::atan2(cur_mouse.y - center.y, cur_mouse.x - center.x);
     if(a < 0) a += 3.14159 * 2;
 
-    float b = std::atan2(start.y, start.x);
+    float b = std::atan2(clicked_mouse.y - center.y, clicked_mouse.x - center.x);
     if(b < 0) b += 3.14159 * 2;
 
     rect_angle = clicked_angle - (a - b);
-
-    //std::cout << "Angle: " << (std::atan2(end.y - start.y, end.x - start.x)) << std::endl;
-
-    //std::cout << "A: " << std::asin(wedge(start.normalized(), end.normalized()).scale()) << std::endl;
-    //std::cout << "A: " << std::acos(dot(start, end)) << std::endl;
-
-    //Compute the new angle, rect_angle, based on the mouse positions
-    //rect_angle = std::atan2(, std::acos(dot(start, end)));
   }
 
   //Assuming the angle (rect_angle), position (rect_pos), and scale (rect_scale) of the rectangle
