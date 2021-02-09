@@ -4,7 +4,25 @@
 #ifndef GEOM_LIB_H
 #define GEOM_LIB_H
 
-#include "PGA/pga.h"
+#include "pga.h"
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef MAX
+#undef MAX
+#endif
+#define MAX max
+
+#ifdef MIN
+#undef MIN
+#endif
+#define MIN min
 
 //Displace a point p on the direction d
 //The result is a point
@@ -27,13 +45,13 @@ float dist(Point2D p1, Point2D p2) {
 //Compute the perpendicular distance from the point p the the line l
 //The result is a scalar 
 float dist(Line2D l, Point2D p) {
-  return vee(p.normalized(), l.normalized());
+  return vee(p, l.normalized());
 }
 
 //Compute the perpendicular distance from the point p the the line l
 //The result is a scalar 
 float dist(Point2D p, Line2D l) {
-  return vee(p.normalized(), l.normalized());
+  return vee(p, l.normalized());
 }
 
 //Compute the intersection point between lines l1 and l2
@@ -65,7 +83,9 @@ Line2D project(Line2D l, Point2D p) {
 //You may assume the lines are not parallel
 //The results is a scalar
 float angle(Line2D l1, Line2D l2) {
-  return std::acos(dot(l1.normalized(), l2.normalized()));
+  std::cout << dot(l1.normalized(), l2.normalized()) << std::endl;
+
+  return std::atan2(l2.y - l1.y, l2.x - l1.x);
 }
 
 //Compute if the line segment p1->p2 intersects the line segment a->b
