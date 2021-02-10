@@ -72,8 +72,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\dev_sdks\SDL2-2.0.14\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\dev_sdks\SDL2-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\dev_sdks\glm-0.9.9.8\glm\glm\gtc;C:\dev_sdks\glm-0.9.9.8\glm\glm;C:\dev_sdks\freeglut\include\GL;C:\dev_sdks\SDL2-2.0.14\include;C:\dev_sdks\freetype-2.10.4\include;C:\dev_sdks\freeglut\include;C:\dev_sdks\SDL2_ttf-2.0.14\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\dev_sdks\freeglut\lib\x64;C:\dev_sdks\freetype-2.10.4\objs;C:\dev_sdks\SDL2-2.0.14\lib\x64;C:\dev_sdks\SDL2_ttf-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\$(ProjectName)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,8 +81,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\dev_sdks\SDL2-2.0.14\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\dev_sdks\SDL2-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\dev_sdks\glm-0.9.9.8\glm\glm\gtc;C:\dev_sdks\glm-0.9.9.8\glm\glm;C:\dev_sdks\freeglut\include\GL;C:\dev_sdks\SDL2-2.0.14\include;C:\dev_sdks\freetype-2.10.4\include;C:\dev_sdks\freeglut\include;C:\dev_sdks\SDL2_ttf-2.0.14\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\dev_sdks\freeglut\lib\x64;C:\dev_sdks\freetype-2.10.4\objs;C:\dev_sdks\SDL2-2.0.14\lib\x64;C:\dev_sdks\SDL2_ttf-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\$(ProjectName)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -102,7 +102,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;freetyped.lib;freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -134,7 +134,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;freetyped.lib;freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -160,16 +160,28 @@
     <ClInclude Include="multivector.h" />
     <ClInclude Include="pga.h" />
     <ClInclude Include="primitives.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="shader_s.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad\glad.c" />
+    <ClCompile Include="GLFont.cpp" />
     <ClCompile Include="pga_example.cpp" />
     <ClCompile Include="squareStarter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="brick.ppm" />
     <None Include="goldy.ppm" />
+    <None Include="rotate.ppm" />
+    <None Include="scale.ppm" />
     <None Include="test.ppm" />
+    <None Include="transform.ppm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="roboto.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Project1.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

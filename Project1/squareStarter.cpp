@@ -14,6 +14,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #endif
+
 #include <cstdio>
 #include <iostream>
 #include <fstream>
@@ -22,6 +23,7 @@
 #include "geom_lib_2d.h"
 #include <vector>
 #include <algorithm>
+#include "GLFont.cpp"
 
 using namespace std;
 
@@ -38,6 +40,11 @@ float rect_scale = 1;
 float rect_angle = 0;
 
 float brightness = 1.3;
+
+bool gravity = false;
+Dir2D velocity = Dir2D(0, 0);
+
+float bg_r = 0.6f, bg_g = 0.6f, bg_b = 0.6f;
 
 // Describes the location and color of the square
 float vertices[] = {  //The function updateVertices() changes these values to match p1,p2,p3,p4
@@ -65,7 +72,6 @@ Line2D l1 = vee(p1, p2).normalized();
 Line2D l2 = vee(p2, p3).normalized();
 Line2D l3 = vee(p3, p4).normalized();
 Line2D l4 = vee(p4, p1).normalized();
-
 
 //Helper variables to track t
 Point2D clicked_pos;
@@ -190,7 +196,7 @@ void mouseClicked(float m_x, float m_y) {
 
       int closestIndex = std::min_element(corners.begin(), corners.end()) - corners.begin();
 
-      Point2D* points[] = { &p1, &p2, &p3, &p4 };      
+      Point2D* points[] = { &p1, &p2, &p3, &p4 };
       scale_closest = *points[closestIndex];
 
       // 2) Create the diagonal
@@ -224,7 +230,30 @@ void mouseDragged(float m_x, float m_y) {
     Point2D center = intersect(vee(p1, p3), vee(p2, p4));
 
     Point2D x3 = project(cur_mouse, scale_diagonal);
-   
+
+    /*
+     * This line calculates the scale delta that should be applied.
+     *
+     * To get the smoothest scaling, as the image changes size, the mouse
+     * should remain over roughly the same region. In other words, the image
+     * shouldn't scale faster or slower than the speed of the mouse.
+     *
+     * To work this out, whichever pixel was under the mouse pointer during the start
+     * of scale should remain under the mouse pointer for the duration of the scale.
+     *
+     * First, observe that x1*clicked_scale = x2.
+     * Then, observe that x1*(clicked_scale+scale_delta)=x3
+     *
+     * The first equation represents the already applied scale. Using a known point x2,
+     * the original x1 point can be found. This can then be used to solve the second
+     * equation for scale_delta.
+     *
+     * The first part:
+     * ((x3.x - (clicked_mouse.x - scale_closest.x) - center.x)
+     *
+     * - maintains the delta between the corner of the square and the click location
+     * - normalizes the point so it will work for any translation.
+     */
     float s = ((x3.x - (clicked_mouse.x - scale_closest.x) - center.x)) / ((scale_closest.x - center.x) / clicked_size) - clicked_size;
 
     rect_scale = clicked_size + s;
@@ -295,15 +324,21 @@ void updateBrightness() {
 
   unsigned char* data = new unsigned char[pixelCount];
 
-  for(int i = 0; i < pixelCount; i+=4) {
+  for(int i = 0; i < pixelCount; i += 4) {
     data[i] = std::clamp((int)(brightness * img_data[i]), 0, 255);
-    data[i+1] = std::clamp((int)(brightness * img_data[i+1]), 0, 255);
-    data[i+2] = std::clamp((int)(brightness * img_data[i+2]), 0, 255);
-    data[i+3] = 255;
+    data[i + 1] = std::clamp((int)(brightness * img_data[i + 1]), 0, 255);
+    data[i + 2] = std::clamp((int)(brightness * img_data[i + 2]), 0, 255);
+    data[i + 3] = 255;
   }
 
   // Redraw the texture
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_w, img_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
+float rand(float min, float max) {
+  float range = (max - min);
+  float div = RAND_MAX / range;
+  return min + (rand() / div);
 }
 
 void plus_keyPressed() {
@@ -320,6 +355,20 @@ void minus_keyPressed() {
   updateBrightness();
 
   std::cout << "Brightness decreased" << std::endl;
+}
+
+void g_keyPressed() {
+  gravity = !gravity;
+
+  std::cout << "Gravity: " << gravity << std::endl;
+}
+
+void q_keyPressed() {
+  bg_r = rand(0, 1);
+  bg_b = rand(0, 1);
+  bg_g = rand(0, 1);
+
+  std::cout << "Background randomized to (" << bg_r << "," << bg_g << "," << bg_b << ")" << std::endl;
 }
 
 void r_keyPressed() {
@@ -347,8 +396,8 @@ void r_keyPressed() {
   rect_pos = Point2D(0, 0);
 
   updateVertices();
-
 }
+
 /////////////////////////////
 /// ... below is OpenGL specifc code,
 ///     we will cover it in detail around Week 9,
@@ -382,6 +431,7 @@ const GLchar* fragmentSource =
 bool fullscreen = false;
 
 float mouse_dragging = false;
+
 int main(int argc, char* argv[]) {
 
   SDL_Init(SDL_INIT_VIDEO);  //Initialize Graphics (for OpenGL)
@@ -392,7 +442,7 @@ int main(int argc, char* argv[]) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
   //Create a window (offsetx, offsety, width, height, flags)
-  SDL_Window* window = SDL_CreateWindow("My OpenGL Program", 100, 100, screen_width, screen_height, SDL_WINDOW_OPENGL);
+  SDL_Window* window = SDL_CreateWindow("5607 HW1 - davie304", 100, 100, screen_width, screen_height, SDL_WINDOW_OPENGL);
   //TODO: TEST your understanding: Try changing the title of the window to something more personalized.
 
  //The above window cannot be resized which makes some code slightly easier.
@@ -441,6 +491,28 @@ int main(int argc, char* argv[]) {
   glGenerateMipmap(GL_TEXTURE_2D);
   //// End Allocate Texture ///////
 
+  //int img_rotate_w, img_rotate_h, img_translate_w, img_translate_h, img_scale_w, img_scale_h;
+
+  //unsigned char* img_rotate = loadImage(img_rotate_w, img_rotate_h);
+  //unsigned char* img_scale = loadImage(img_scale_w, img_scale_h);
+  //unsigned char* img_translate = loadImage(img_translate_w, img_translate_h);
+
+  //// Load the images into memory
+  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_rotate_w, img_rotate_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_rotate);
+  //
+  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_scale_w, img_scale_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_scale);
+  //
+  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_translate_w, img_translate_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_translate);
+  //
+  //GLuint tex_rotate;
+  //GLuint tex_scale;
+  //GLuint tex_transform;
+
+  //glGenTextures(1, &tex_rotate);
+  //glGenTextures(1, &tex_scale);
+  //glGenTextures(1, &tex_transform);
+
+  //glBindTexture(GL_TEXTURE_2D, tex_rotate);
 
   //Build a Vertex Array Object. This stores the VBO and attribute mappings in one object
   GLuint vao;
@@ -508,6 +580,7 @@ int main(int argc, char* argv[]) {
   glEnableVertexAttribArray(texAttrib);
   glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
 
+  GLFont font("roboto.ttf", 24, 800, 800);
 
   //Event Loop (Loop forever processing each event as fast as possible)
   SDL_Event windowEvent;
@@ -527,10 +600,13 @@ int main(int argc, char* argv[]) {
         minus_keyPressed();
       if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_EQUALS)
         plus_keyPressed();
+      if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_g)
+        g_keyPressed();
+      if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_q)
+        q_keyPressed();
 
       SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN : 0); //Set to full screen 
     }
-
 
     int mx, my;
     if(SDL_GetMouseState(&mx, &my) & SDL_BUTTON(SDL_BUTTON_LEFT)) { //Is the mouse down?
@@ -544,16 +620,32 @@ int main(int argc, char* argv[]) {
       mouse_dragging = false;
     }
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW); //upload vertices to vbo
-
+    // Handle gravity
+    if(gravity) {
+      velocity.y -= 0.02;
+      rect_pos = rect_pos - velocity;
+      updateVertices();
+    }
 
     // Clear the screen to grey
-    glClearColor(0.6f, 0.6, 0.6f, 0.0f);
+    
+    glClearColor(bg_r, bg_g, bg_b, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex0);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindVertexArray(vao);
+    glUseProgram(shaderProgram);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW); //upload vertices to vbo
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //Draw the two triangles (4 vertices) making up the square
     //TODO: TEST your understanding: What shape do you expect to see if you change the above 4 to 3?  Guess, then try it!
-
+    
+    
+    font.RenderText("Test", 15, 15, 1, glm::vec3(0.5, 0.8f, 0.2f));
     SDL_GL_SwapWindow(window); //Double buffering
   }
 
@@ -565,7 +657,6 @@ int main(int argc, char* argv[]) {
   glDeleteBuffers(1, &vbo);
 
   glDeleteVertexArrays(1, &vao);
-
 
   //Clean Up
   SDL_GL_DeleteContext(context);

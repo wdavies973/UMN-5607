@@ -36,6 +36,12 @@
     <ClInclude Include="geom_lib_2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shader_s.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pga_example.cpp">
@@ -46,6 +52,9 @@
     </ClCompile>
     <ClCompile Include="glad\glad.c">
       <Filter>Source Files\glad</Filter>
+    </ClCompile>
+    <ClCompile Include="GLFont.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -58,5 +67,24 @@
     <None Include="test.ppm">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="rotate.ppm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="scale.ppm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="transform.ppm">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="roboto.ttf">
+      <Filter>Resource Files</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Project1.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
