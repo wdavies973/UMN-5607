@@ -37,6 +37,8 @@ Point2D rect_pos = Point2D(0, 0);
 float rect_scale = 1;
 float rect_angle = 0;
 
+float brightness = 1.3;
+
 // Describes the location and color of the square
 float vertices[] = {  //The function updateVertices() changes these values to match p1,p2,p3,p4
 //  X     Y     R     G     B     U    V
@@ -71,7 +73,6 @@ Point2D clicked_mouse;
 float clicked_angle, clicked_size;
 Line2D scale_diagonal;
 Point2D scale_closest;
-Point2D init_r;
 
 void mouseClicked(float mx, float my); //Called when mouse is pressed down
 void mouseDragged(float mx, float my); //Called each time the mouse is moved during click
@@ -80,6 +81,9 @@ void updateVertices();
 bool do_translate = false;
 bool do_rotate = false;
 bool do_scale = false;
+
+int img_w, img_h;
+unsigned char* img_data;
 
 
 //////////////////////////
@@ -156,13 +160,6 @@ void mouseClicked(float m_x, float m_y) {
   clicked_angle = rect_angle;
   clicked_size = rect_scale;
 
-  // Idea for how to solve:
-  // This needs to be scale and rotation agnostic.
-  // The first idea is to use the point in polygon test.
-  // This does leave some problems, how do we do the correct polygon?
-  // Maybe a slightly scaled down polygon for the inner part.
-  // How about the corners? Could use the corner test. Check if its beneath some threshold?
-
   // Ensure the click occurred within the polygon
   float f1 = vee(clicked_mouse, l1);
   float f2 = vee(clicked_mouse, l2);
@@ -193,8 +190,6 @@ void mouseClicked(float m_x, float m_y) {
 
       int closestIndex = std::min_element(corners.begin(), corners.end()) - corners.begin();
 
-      std::cout << "Closest: " << closestIndex << std::endl;
-
       Point2D* points[] = { &p1, &p2, &p3, &p4 };      
       scale_closest = *points[closestIndex];
 
@@ -217,10 +212,6 @@ void mouseClicked(float m_x, float m_y) {
   }
 }
 
-//TODO: Update the position, rotation, or scale based on the mouse movement
-//  I've implemented the logic for position, you need to do scaling and angle
-//TODO: Notice how smooth draging the square is (e.g., there are no "jumps" when you click), 
-//      try to make your implementation of rotate and scale as smooth
 void mouseDragged(float m_x, float m_y) {
   Point2D cur_mouse = Point2D(m_x, m_y);
 
@@ -299,7 +290,38 @@ void updateVertices() {
   vertices[22] = p1.y;  //Bottom left y
 }
 
-//TODO: Resest the square's position, orientation, and scale
+void updateBrightness() {
+  int pixelCount = img_w * img_h * 4;
+
+  unsigned char* data = new unsigned char[pixelCount];
+
+  for(int i = 0; i < pixelCount; i+=4) {
+    data[i] = std::clamp((int)(brightness * img_data[i]), 0, 255);
+    data[i+1] = std::clamp((int)(brightness * img_data[i+1]), 0, 255);
+    data[i+2] = std::clamp((int)(brightness * img_data[i+2]), 0, 255);
+    data[i+3] = 255;
+  }
+
+  // Redraw the texture
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_w, img_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
+void plus_keyPressed() {
+  brightness += 0.1;
+
+  updateBrightness();
+
+  std::cout << "Brightness increased" << std::endl;
+}
+
+void minus_keyPressed() {
+  brightness -= 0.1;
+
+  updateBrightness();
+
+  std::cout << "Brightness decreased" << std::endl;
+}
+
 void r_keyPressed() {
   cout << "The 'r' key was pressed" << endl;
   //You should reset the 4 points of the rectangle, and update the coresponding verticies
@@ -315,6 +337,9 @@ void r_keyPressed() {
   l2 = vee(p2, p3).normalized();
   l3 = vee(p3, p4).normalized();
   l4 = vee(p4, p1).normalized();
+
+  brightness = 1.3;
+  updateBrightness();
 
   // Reset globals
   rect_scale = 1;
@@ -408,9 +433,7 @@ int main(int argc, char* argv[]) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); //GL_LINEAR
   //TODO: TEST your understanding: Try GL_LINEAR instead of GL_NEAREST on the 4x4 test image. What is happening?
 
-
-  int img_w, img_h;
-  unsigned char* img_data = loadImage(img_w, img_h);
+  img_data = loadImage(img_w, img_h);
   printf("Loaded Image of size (%d,%d)\n", img_w, img_h);
   //memset(img_data,0,4*img_w*img_h); //Load all zeros
   //Load the texture into memory
@@ -500,6 +523,11 @@ int main(int argc, char* argv[]) {
         fullscreen = !fullscreen;
       if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_r) //If "r" is pressed
         r_keyPressed();
+      if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_MINUS)
+        minus_keyPressed();
+      if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_EQUALS)
+        plus_keyPressed();
+
       SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN : 0); //Set to full screen 
     }
 
