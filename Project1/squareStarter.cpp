@@ -20,6 +20,8 @@
 #include <string>
 #include "pga.h"
 #include "geom_lib_2d.h"
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -66,7 +68,10 @@ Line2D l4 = vee(p4, p1).normalized();
 //Helper variables to track t
 Point2D clicked_pos;
 Point2D clicked_mouse;
-float clicked_angle, clicked_size = 0;
+float clicked_angle, clicked_size;
+Line2D scale_diagonal;
+Point2D scale_closest;
+Point2D init_r;
 
 void mouseClicked(float mx, float my); //Called when mouse is pressed down
 void mouseDragged(float mx, float my); //Called each time the mouse is moved during click
@@ -173,9 +178,29 @@ void mouseClicked(float m_x, float m_y) {
 
     float min = std::min(d1, std::min(d2, std::min(d3, d4)));
 
-    std::cout << "COrner dist" << min << std::endl;
-
     do_scale = min < 0.1;
+
+    if(do_scale) {
+      // First, find the pixels dragged on any diagonal, either positive or negative.
+      // Do this by projecting the line formed by the mouse onto each diagonal,
+      // and selecting the one with largest magnitude
+      Point2D center = intersect(vee(p1, p3), vee(p2, p4));
+
+      // 1) Determine which of p1,p2,p3,p4 is nearest
+      std::vector<float> corners =
+      { vee(clicked_mouse, p1).magnitudeSqr(), vee(clicked_mouse, p2).magnitudeSqr(),
+        vee(clicked_mouse, p3).magnitudeSqr(), vee(clicked_mouse, p4).magnitudeSqr() };
+
+      int closestIndex = std::min_element(corners.begin(), corners.end()) - corners.begin();
+
+      std::cout << "Closest: " << closestIndex << std::endl;
+
+      Point2D* points[] = { &p1, &p2, &p3, &p4 };      
+      scale_closest = *points[closestIndex];
+
+      // 2) Create the diagonal
+      scale_diagonal = vee(center, scale_closest);
+    }
 
     f1 = vee(clicked_mouse, l1.normalized());
     f2 = vee(clicked_mouse, l2.normalized());
@@ -183,8 +208,6 @@ void mouseClicked(float m_x, float m_y) {
     f4 = vee(clicked_mouse, l4.normalized());
 
     min = std::min(f1, std::min(f2, std::min(f3, f4)));
-
-    std::cout << "Edge dist" << min << std::endl;
 
     do_rotate = !do_scale && min < 0.1;
 
@@ -210,17 +233,20 @@ void mouseDragged(float m_x, float m_y) {
   }
 
   if(do_scale) {
-    float s1 = (cur_mouse.x / (clicked_mouse.x / clicked_size)) - clicked_size;
-    float s2 = (cur_mouse.y / (clicked_mouse.y / clicked_size)) - clicked_size;
+    Point2D center = intersect(vee(p1, p3), vee(p2, p4));
 
-    float d1 = clicked_mouse.x * clicked_mouse.x + clicked_mouse.y * clicked_mouse.y;
-    float d2 = cur_mouse.x * cur_mouse.x + cur_mouse.y * cur_mouse.y;
-    
-    rect_scale = clicked_size + (d2 - d1);
+    Point2D x3 = project(cur_mouse, scale_diagonal);
+   
+    (x3 - scale_closest).print();
+    scale_closest.print();
+
+
+    float s = (x3.x - center.x) / ((scale_closest.x - center.x) / clicked_size) - clicked_size;
+
+    rect_scale = clicked_size + s;
   }
 
   if(do_rotate) {
-    // Find center
     Point2D center = intersect(vee(p1, p3), vee(p2, p4));
 
     float a = std::atan2(cur_mouse.y - center.y, cur_mouse.x - center.x);
@@ -289,6 +315,18 @@ void r_keyPressed() {
   p2 = init_p2;
   p3 = init_p3;
   p4 = init_p4;
+
+  // Lines need to be reset so mouse clicked
+  // point in polygon test succeeds
+  l1 = vee(p1, p2).normalized();
+  l2 = vee(p2, p3).normalized();
+  l3 = vee(p3, p4).normalized();
+  l4 = vee(p4, p1).normalized();
+
+  // Reset globals
+  rect_scale = 1;
+  rect_angle = 0;
+  rect_pos = Point2D(0, 0);
 
   updateVertices();
 
