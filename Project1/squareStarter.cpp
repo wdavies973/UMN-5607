@@ -178,7 +178,7 @@ void mouseClicked(float m_x, float m_y) {
 
     float min = std::min(d1, std::min(d2, std::min(d3, d4)));
 
-    do_scale = min < 0.1;
+    do_scale = min < 0.1 * rect_scale;
 
     if(do_scale) {
       // First, find the pixels dragged on any diagonal, either positive or negative.
@@ -209,15 +209,12 @@ void mouseClicked(float m_x, float m_y) {
 
     min = std::min(f1, std::min(f2, std::min(f3, f4)));
 
-    do_rotate = !do_scale && min < 0.1;
+    do_rotate = !do_scale && min < 0.1 * rect_scale;
 
     do_translate = !do_scale && !do_rotate;
   } else {
     do_scale = do_rotate = do_translate = false;
   }
-
-  //do_rotate = (f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0);
-  //do_scale = (f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0);
 }
 
 //TODO: Update the position, rotation, or scale based on the mouse movement
@@ -237,11 +234,7 @@ void mouseDragged(float m_x, float m_y) {
 
     Point2D x3 = project(cur_mouse, scale_diagonal);
    
-    (x3 - scale_closest).print();
-    scale_closest.print();
-
-
-    float s = (x3.x - center.x) / ((scale_closest.x - center.x) / clicked_size) - clicked_size;
+    float s = ((x3.x - (clicked_mouse.x - scale_closest.x) - center.x)) / ((scale_closest.x - center.x) / clicked_size) - clicked_size;
 
     rect_scale = clicked_size + s;
   }
