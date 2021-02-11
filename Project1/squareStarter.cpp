@@ -491,29 +491,6 @@ int main(int argc, char* argv[]) {
   glGenerateMipmap(GL_TEXTURE_2D);
   //// End Allocate Texture ///////
 
-  //int img_rotate_w, img_rotate_h, img_translate_w, img_translate_h, img_scale_w, img_scale_h;
-
-  //unsigned char* img_rotate = loadImage(img_rotate_w, img_rotate_h);
-  //unsigned char* img_scale = loadImage(img_scale_w, img_scale_h);
-  //unsigned char* img_translate = loadImage(img_translate_w, img_translate_h);
-
-  //// Load the images into memory
-  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_rotate_w, img_rotate_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_rotate);
-  //
-  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_scale_w, img_scale_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_scale);
-  //
-  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_translate_w, img_translate_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_translate);
-  //
-  //GLuint tex_rotate;
-  //GLuint tex_scale;
-  //GLuint tex_transform;
-
-  //glGenTextures(1, &tex_rotate);
-  //glGenTextures(1, &tex_scale);
-  //glGenTextures(1, &tex_transform);
-
-  //glBindTexture(GL_TEXTURE_2D, tex_rotate);
-
   //Build a Vertex Array Object. This stores the VBO and attribute mappings in one object
   GLuint vao;
   glGenVertexArrays(1, &vao); //Create a VAO
@@ -580,7 +557,7 @@ int main(int argc, char* argv[]) {
   glEnableVertexAttribArray(texAttrib);
   glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
 
-  GLFont font("roboto.ttf", 24, screen_width, screen_height);
+  GLFont font("roboto.ttf", 14, screen_width, screen_height);
 
   //Event Loop (Loop forever processing each event as fast as possible)
   SDL_Event windowEvent;
@@ -618,6 +595,7 @@ int main(int argc, char* argv[]) {
       mouse_dragging = true;
     } else {
       mouse_dragging = false;
+      do_rotate = do_translate = do_scale = false;
     }
 
     // Handle gravity
@@ -642,8 +620,20 @@ int main(int argc, char* argv[]) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //Draw the two triangles (4 vertices) making up the square
     //TODO: TEST your understanding: What shape do you expect to see if you change the above 4 to 3?  Guess, then try it!
     
-   
-    font.RenderText("Test2", 15, 15, 1, glm::vec3(0.5, 0.8f, 0.2f));
+    char text[128];
+    memset(text, 0, 128);
+
+    if(do_translate) {
+      snprintf(text, 128, "Translating: (%.2f,%.2f)", rect_pos.x, rect_pos.y);
+      font.RenderText(text, 15, screen_height - 30, 1, glm::vec3(0.f, 0.f, 0.f));
+    } else if(do_rotate) {
+      snprintf(text, 128, "Rotating: %.2f deg", rect_angle * (180 / 3.14159) + 180);
+      font.RenderText(text, 15, screen_height - 30, 1, glm::vec3(0.f, 0.f, 0.f));
+    } else if(do_scale) {
+      snprintf(text, 128, "Scaling: %.2f%%", rect_scale * 100);
+      font.RenderText(text, 15, screen_height - 30, 1, glm::vec3(0.f, 0.f, 0.f));
+    }
+
     SDL_GL_SwapWindow(window); //Double buffering
   }
 
