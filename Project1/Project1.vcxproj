@@ -74,20 +74,29 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\dev_sdks\glm-0.9.9.8\glm\glm\gtc;C:\dev_sdks\glm-0.9.9.8\glm\glm;C:\dev_sdks\freeglut\include\GL;C:\dev_sdks\SDL2-2.0.14\include;C:\dev_sdks\freetype-2.10.4\include;C:\dev_sdks\freeglut\include;C:\dev_sdks\SDL2_ttf-2.0.14\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\dev_sdks\freeglut\lib\x64;C:\dev_sdks\freetype-2.10.4\objs;C:\dev_sdks\SDL2-2.0.14\lib\x64;C:\dev_sdks\SDL2_ttf-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\$(ProjectName)\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\dev_sdks\glm-0.9.9.8\glm\glm\gtc;C:\dev_sdks\glm-0.9.9.8\glm\glm;C:\dev_sdks\freeglut\include\GL;C:\dev_sdks\SDL2-2.0.14\include;C:\dev_sdks\freetype-2.10.4\include;C:\dev_sdks\freeglut\include;C:\dev_sdks\SDL2_ttf-2.0.14\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\dev_sdks\freeglut\lib\x64;C:\dev_sdks\freetype-2.10.4\objs;C:\dev_sdks\SDL2-2.0.14\lib\x64;C:\dev_sdks\SDL2_ttf-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\dev_sdks\glm-0.9.9.8\glm\glm\gtc;C:\dev_sdks\glm-0.9.9.8\glm\glm;C:\dev_sdks\freeglut\include\GL;C:\dev_sdks\SDL2-2.0.14\include;C:\dev_sdks\freetype-2.10.4\include;C:\dev_sdks\freeglut\include;C:\dev_sdks\SDL2_ttf-2.0.14\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\dev_sdks\freeglut\lib\x64;C:\dev_sdks\freetype-2.10.4\objs;C:\dev_sdks\SDL2-2.0.14\lib\x64;C:\dev_sdks\SDL2_ttf-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\$(ProjectName)\$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\dev_sdks\glm-0.9.9.8\glm\glm\gtc;C:\dev_sdks\glm-0.9.9.8\glm\glm;C:\dev_sdks\freeglut\include\GL;C:\dev_sdks\SDL2-2.0.14\include;C:\dev_sdks\freetype-2.10.4\include;C:\dev_sdks\freeglut\include;C:\dev_sdks\SDL2_ttf-2.0.14\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\dev_sdks\freeglut\lib\x64;C:\dev_sdks\freetype-2.10.4\objs;C:\dev_sdks\SDL2-2.0.14\lib\x64;C:\dev_sdks\SDL2_ttf-2.0.14\lib\x64;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -96,8 +105,8 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -113,12 +122,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;freetyped.lib;freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -128,8 +140,8 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,12 +157,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;freetyped.lib;freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

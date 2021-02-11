@@ -23,6 +23,7 @@
 #include "geom_lib_2d.h"
 #include <vector>
 #include <algorithm>
+
 #include "GLFont.cpp"
 
 using namespace std;
@@ -194,7 +195,15 @@ void mouseClicked(float m_x, float m_y) {
       { vee(clicked_mouse, p1).magnitudeSqr(), vee(clicked_mouse, p2).magnitudeSqr(),
         vee(clicked_mouse, p3).magnitudeSqr(), vee(clicked_mouse, p4).magnitudeSqr() };
 
-      int closestIndex = std::min_element(corners.begin(), corners.end()) - corners.begin();
+      float min = 999999.f;
+      int closestIndex = 0;
+
+      for(int i = 0; i < corners.size(); i++) {
+        if(corners[i] < min) {
+          min = corners[i];
+          closestIndex = i;
+        }
+      }
 
       Point2D* points[] = { &p1, &p2, &p3, &p4 };
       scale_closest = *points[closestIndex];
@@ -256,7 +265,7 @@ void mouseDragged(float m_x, float m_y) {
      */
     float s = ((x3.x - (clicked_mouse.x - scale_closest.x) - center.x)) / ((scale_closest.x - center.x) / clicked_size) - clicked_size;
 
-    rect_scale = clicked_size + s;
+    rect_scale = std::max(clicked_size + s, 0.05f);
   }
 
   if(do_rotate) {
@@ -325,9 +334,9 @@ void updateBrightness() {
   unsigned char* data = new unsigned char[pixelCount];
 
   for(int i = 0; i < pixelCount; i += 4) {
-    data[i] = std::clamp((int)(brightness * img_data[i]), 0, 255);
-    data[i + 1] = std::clamp((int)(brightness * img_data[i + 1]), 0, 255);
-    data[i + 2] = std::clamp((int)(brightness * img_data[i + 2]), 0, 255);
+    data[i] = clamp((int)(brightness * img_data[i]), 0, 255);
+    data[i + 1] = clamp((int)(brightness * img_data[i + 1]), 0, 255);
+    data[i + 2] = clamp((int)(brightness * img_data[i + 2]), 0, 255);
     data[i + 3] = 255;
   }
 
@@ -557,8 +566,9 @@ int main(int argc, char* argv[]) {
   glEnableVertexAttribArray(texAttrib);
   glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
 
+#if COMPILE_FONT_ENGINE
   GLFont font("roboto.ttf", 14, screen_width, screen_height);
-
+#endif
   //Event Loop (Loop forever processing each event as fast as possible)
   SDL_Event windowEvent;
   bool done = false;
@@ -595,7 +605,6 @@ int main(int argc, char* argv[]) {
       mouse_dragging = true;
     } else {
       mouse_dragging = false;
-      do_rotate = do_translate = do_scale = false;
     }
 
     // Handle gravity
@@ -623,6 +632,7 @@ int main(int argc, char* argv[]) {
     char text[128];
     memset(text, 0, 128);
 
+#if COMPILE_FONT_ENGINE
     if(do_translate) {
       snprintf(text, 128, "Translating: (%.2f,%.2f)", rect_pos.x, rect_pos.y);
       font.RenderText(text, 15, screen_height - 30, 1, glm::vec3(0.f, 0.f, 0.f));
@@ -633,7 +643,7 @@ int main(int argc, char* argv[]) {
       snprintf(text, 128, "Scaling: %.2f%%", rect_scale * 100);
       font.RenderText(text, 15, screen_height - 30, 1, glm::vec3(0.f, 0.f, 0.f));
     }
-
+#endif
     SDL_GL_SwapWindow(window); //Double buffering
   }
 

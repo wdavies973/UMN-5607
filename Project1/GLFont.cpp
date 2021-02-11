@@ -1,3 +1,7 @@
+#define COMPILE_FONT_ENGINE true
+
+#if COMPILE_FONT_ENGINE
+
 #include "glad/glad.h"
 
 #include <iostream>
@@ -9,6 +13,7 @@
 #include <glm.hpp>
 #include <matrix_transform.hpp>
 #include <type_ptr.hpp>
+
 
 /*
 An opengl font library to draw simple ascii text.
@@ -231,3 +236,5 @@ public:
     glDisable(GL_BLEND);
   }
 };
+
+#endif
