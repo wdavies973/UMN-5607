@@ -580,7 +580,7 @@ int main(int argc, char* argv[]) {
   glEnableVertexAttribArray(texAttrib);
   glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
 
-  GLFont font("roboto.ttf", 24, 800, 800);
+  GLFont font("roboto.ttf", 24, screen_width, screen_height);
 
   //Event Loop (Loop forever processing each event as fast as possible)
   SDL_Event windowEvent;
@@ -632,8 +632,6 @@ int main(int argc, char* argv[]) {
     glClearColor(bg_r, bg_g, bg_b, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex0);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBindVertexArray(vao);
@@ -644,8 +642,8 @@ int main(int argc, char* argv[]) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //Draw the two triangles (4 vertices) making up the square
     //TODO: TEST your understanding: What shape do you expect to see if you change the above 4 to 3?  Guess, then try it!
     
-    
-    font.RenderText("Test", 15, 15, 1, glm::vec3(0.5, 0.8f, 0.2f));
+   
+    font.RenderText("Test2", 15, 15, 1, glm::vec3(0.5, 0.8f, 0.2f));
     SDL_GL_SwapWindow(window); //Double buffering
   }
 

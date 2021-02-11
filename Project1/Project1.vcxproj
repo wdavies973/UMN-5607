@@ -161,7 +161,6 @@
     <ClInclude Include="pga.h" />
     <ClInclude Include="primitives.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="shader_s.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad\glad.c" />
@@ -172,10 +171,7 @@
   <ItemGroup>
     <None Include="brick.ppm" />
     <None Include="goldy.ppm" />
-    <None Include="rotate.ppm" />
-    <None Include="scale.ppm" />
     <None Include="test.ppm" />
-    <None Include="transform.ppm" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="roboto.ttf" />

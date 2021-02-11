@@ -39,9 +39,6 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="shader_s.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pga_example.cpp">
@@ -65,15 +62,6 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="test.ppm">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="rotate.ppm">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="scale.ppm">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="transform.ppm">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

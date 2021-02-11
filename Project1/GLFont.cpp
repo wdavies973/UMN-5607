@@ -1,5 +1,4 @@
-
-#include "shader_s.h"
+#include "glad/glad.h"
 
 #include <iostream>
 #include <ft2build.h>
@@ -10,6 +9,17 @@
 #include <glm.hpp>
 #include <matrix_transform.hpp>
 #include <type_ptr.hpp>
+
+/*
+An opengl font library to draw simple ascii text.
+
+Based off the tutorial here: https://learnopengl.com/
+
+Required libraries/resources: 
+- GLM: https://github.com/g-truc/glm/tags
+- FreeType: https://download.savannah.gnu.org/releases/freetype/
+- A .ttf to use for fonts.
+*/
 
 class GLFont {
 public:
@@ -172,8 +182,6 @@ public:
 
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
-
-    std::cout << "Font engine loaded15" << std::endl;
   }
 
   void RenderText(std::string text, float x, float y, float scale, glm::vec3 color) {
