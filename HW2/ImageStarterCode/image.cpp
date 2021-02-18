@@ -189,7 +189,6 @@ void Image::Write(char* fname){
 	}
 }
 
-
 //TODO - HW2: Ok, not much to do here, but read through this carefully =)
 //TODO - HW2: In particular, make sure you understand how GetPixel() works, I use it two different ways here!
 void Image::Brighten (double factor){
@@ -203,20 +202,46 @@ void Image::Brighten (double factor){
 	}
 }
 
-
 //TODO - HW2: Crop an image to a rectangle starting at (x,y) with a width w and a height h
 Image* Image::Crop(int x, int y, int w, int h) {
-	/* WORK HERE */
-	return NULL;
+  Image* img = new Image(w, h);
+  int u, v;
+  for(u = 0; u < w; u++) {
+    for(v = 0; v < h; v++) {
+      img->SetPixel(u, v, GetPixel(x + u, y + v));
+    }
+  }
+
+	return img;
 }
 
 //TODO - HW2: Keep only non-zero red, green, or blue components for the channel value 0, 1, and 2 respectively
 void Image::ExtractChannel(int channel) {
-	/* WORK HERE */
+	// Set all channels but "channel" to 0.
+  int x, y;
+  for(x = 0; x < Width(); x++) {
+    for(y = 0; y < Height(); y++) {
+      Pixel p = GetPixel(x, y);
+
+      if(channel != 0) p.r = 0;
+      if(channel != 1) p.g = 0;
+      if(channel != 2) p.b = 0;
+
+      GetPixel(x, y) = p;
+    }
+  }
 }
 
 //TODO - HW2: Quantize the intensities stored for each pixel's values into 2^nbits possible equally-spaced values
 //TODO - HW2: You may find a very helpful function in the pixel class!
 void Image::Quantize (int nbits) {
-	/* WORK HERE */
+  // Set all channels but "channel" to 0.
+  int x, y;
+  for(x = 0; x < Width(); x++) {
+    for(y = 0; y < Height(); y++) {
+      Pixel p = GetPixel(x, y);
+
+      GetPixel(x, y) = PixelQuant(p, nbits);
+    }
+  }
 }
