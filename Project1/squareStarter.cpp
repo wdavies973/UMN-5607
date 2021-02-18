@@ -41,10 +41,6 @@ float rect_scale = 1;
 float rect_angle = 0;
 
 float brightness = 1.3;
-
-bool gravity = false;
-Dir2D velocity = Dir2D(0, 0);
-
 float bg_r = 0.6f, bg_g = 0.6f, bg_b = 0.6f;
 
 // Describes the location and color of the square
@@ -78,8 +74,6 @@ Line2D l4 = vee(p4, p1).normalized();
 Point2D clicked_pos;
 Point2D clicked_mouse;
 float clicked_angle, clicked_size;
-Line2D scale_diagonal;
-Point2D scale_closest;
 
 void mouseClicked(float mx, float my); //Called when mouse is pressed down
 void mouseDragged(float mx, float my); //Called each time the mouse is moved during click
@@ -89,8 +83,11 @@ bool do_translate = false;
 bool do_rotate = false;
 bool do_scale = false;
 
+bool animating = false;
+
 int img_w, img_h;
 unsigned char* img_data;
+unsigned char* img_cpy;
 
 
 //////////////////////////
@@ -140,150 +137,10 @@ unsigned char* loadImage(int& img_w, int& img_h) {
     pixelNum++;
   }
 
-  //for(int i = 0; i < img_h; i++) {
-  //  float fi = i / (float)img_h;
-  //  for(int j = 0; j < img_w; j++) {
-  //    float fj = j / (float)img_w;
-  //    img_data[i * img_w * 4 + j * 4] = 50;  //Red
-  //    img_data[i * img_w * 4 + j * 4 + 1] = fj * 150;  //Green
-  //    img_data[i * img_w * 4 + j * 4 + 2] = fi * 250;  //Blue
-  //    img_data[i * img_w * 4 + j * 4 + 3] = 255;  //Alpha
-  //  }
-  //}
-
   return img_data;
 }
 
-//TODO: Choose between translate, rotate, and scale based on where the user clicked
-// Here, I just assume there is always a translate operation. Fix this to switch between
-// translate, rotate, and scale based on where on the square the user clicks.
-void mouseClicked(float m_x, float m_y) {
-  printf("Clicked at %f, %f\n", m_x, m_y);
-
-  //We may need to know the state of the mouse and the square at the moment the user clicked
-  //  so we save them in the follow four variables.
-  clicked_mouse = Point2D(m_x, m_y);
-  clicked_pos = rect_pos;
-  clicked_angle = rect_angle;
-  clicked_size = rect_scale;
-
-  // Ensure the click occurred within the polygon
-  float f1 = vee(clicked_mouse, l1);
-  float f2 = vee(clicked_mouse, l2);
-  float f3 = vee(clicked_mouse, l3);
-  float f4 = vee(clicked_mouse, l4);
-
-  if((f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0)) {
-    // Determine which action the user is trying to perform.
-    float d1 = vee(clicked_mouse, p1).magnitude();
-    float d2 = vee(clicked_mouse, p2).magnitude();
-    float d3 = vee(clicked_mouse, p3).magnitude();
-    float d4 = vee(clicked_mouse, p4).magnitude();
-
-    float min = std::min(d1, std::min(d2, std::min(d3, d4)));
-
-    do_scale = min < 0.1 * rect_scale;
-
-    if(do_scale) {
-      // First, find the pixels dragged on any diagonal, either positive or negative.
-      // Do this by projecting the line formed by the mouse onto each diagonal,
-      // and selecting the one with largest magnitude
-      Point2D center = intersect(vee(p1, p3), vee(p2, p4));
-
-      // 1) Determine which of p1,p2,p3,p4 is nearest
-      std::vector<float> corners =
-      { vee(clicked_mouse, p1).magnitudeSqr(), vee(clicked_mouse, p2).magnitudeSqr(),
-        vee(clicked_mouse, p3).magnitudeSqr(), vee(clicked_mouse, p4).magnitudeSqr() };
-
-      float min = 999999.f;
-      int closestIndex = 0;
-
-      for(int i = 0; i < corners.size(); i++) {
-        if(corners[i] < min) {
-          min = corners[i];
-          closestIndex = i;
-        }
-      }
-
-      Point2D* points[] = { &p1, &p2, &p3, &p4 };
-      scale_closest = *points[closestIndex];
-
-      // 2) Create the diagonal
-      scale_diagonal = vee(center, scale_closest);
-    }
-
-    f1 = vee(clicked_mouse, l1.normalized());
-    f2 = vee(clicked_mouse, l2.normalized());
-    f3 = vee(clicked_mouse, l3.normalized());
-    f4 = vee(clicked_mouse, l4.normalized());
-
-    min = std::min(f1, std::min(f2, std::min(f3, f4)));
-
-    do_rotate = !do_scale && min < 0.1 * rect_scale;
-
-    do_translate = !do_scale && !do_rotate;
-  } else {
-    do_scale = do_rotate = do_translate = false;
-  }
-}
-
-void mouseDragged(float m_x, float m_y) {
-  Point2D cur_mouse = Point2D(m_x, m_y);
-
-  if(do_translate) {
-    Dir2D disp = cur_mouse - clicked_mouse;
-    rect_pos = clicked_pos + disp;
-  }
-
-  if(do_scale) {
-    Point2D center = intersect(vee(p1, p3), vee(p2, p4));
-
-    Point2D x3 = project(cur_mouse, scale_diagonal);
-
-    /*
-     * This line calculates the scale delta that should be applied.
-     *
-     * To get the smoothest scaling, as the image changes size, the mouse
-     * should remain over roughly the same region. In other words, the image
-     * shouldn't scale faster or slower than the speed of the mouse.
-     *
-     * To work this out, whichever pixel was under the mouse pointer during the start
-     * of scale should remain under the mouse pointer for the duration of the scale.
-     *
-     * First, observe that x1*clicked_scale = x2.
-     * Then, observe that x1*(clicked_scale+scale_delta)=x3
-     *
-     * The first equation represents the already applied scale. Using a known point x2,
-     * the original x1 point can be found. This can then be used to solve the second
-     * equation for scale_delta.
-     *
-     * The first part:
-     * ((x3.x - (clicked_mouse.x - scale_closest.x) - center.x)
-     *
-     * - maintains the delta between the corner of the square and the click location
-     * - normalizes the point so it will work for any translation.
-     */
-    float s = ((x3.x - (clicked_mouse.x - scale_closest.x) - center.x)) / ((scale_closest.x - center.x) / clicked_size) - clicked_size;
-
-    rect_scale = std::max(clicked_size + s, 0.05f);
-  }
-
-  if(do_rotate) {
-    Point2D center = intersect(vee(p1, p3), vee(p2, p4));
-
-    float a = std::atan2(cur_mouse.y - center.y, cur_mouse.x - center.x);
-    if(a < 0) a += 3.14159 * 2;
-
-    float b = std::atan2(clicked_mouse.y - center.y, clicked_mouse.x - center.x);
-    if(b < 0) b += 3.14159 * 2;
-
-    rect_angle = clicked_angle - (a - b);
-  }
-
-  //Assuming the angle (rect_angle), position (rect_pos), and scale (rect_scale) of the rectangle
-  //  have all been set above, the following code should rotate, shift and scale the shape correctly.
-  //It's still good to read through and make sure you understand how this works!
-
+void applyChanges() {
   Motor2D translate, rotate;
 
   Dir2D disp = rect_pos - origin;
@@ -313,6 +170,83 @@ void mouseDragged(float m_x, float m_y) {
   updateVertices();
 }
 
+//TODO: Choose between translate, rotate, and scale based on where the user clicked
+// Here, I just assume there is always a translate operation. Fix this to switch between
+// translate, rotate, and scale based on where on the square the user clicks.
+void mouseClicked(float m_x, float m_y) {
+  printf("Clicked at %f, %f\n", m_x, m_y);
+
+  animating = false;
+
+  //We may need to know the state of the mouse and the square at the moment the user clicked
+  //  so we save them in the follow four variables.
+  clicked_mouse = Point2D(m_x, m_y);
+  clicked_pos = rect_pos;
+  clicked_angle = rect_angle;
+  clicked_size = rect_scale;
+
+  // Ensure the click occurred within the polygon
+  float f1 = vee(clicked_mouse, l1);
+  float f2 = vee(clicked_mouse, l2);
+  float f3 = vee(clicked_mouse, l3);
+  float f4 = vee(clicked_mouse, l4);
+
+  if((f1 > 0 == f2 > 0) && (f1 > 0 == f3 > 0) && (f1 > 0 == f4 > 0)) {
+    // Determine which action the user is trying to perform.
+    float d1 = vee(clicked_mouse, p1).magnitude();
+    float d2 = vee(clicked_mouse, p2).magnitude();
+    float d3 = vee(clicked_mouse, p3).magnitude();
+    float d4 = vee(clicked_mouse, p4).magnitude();
+
+    float min = std::min(d1, std::min(d2, std::min(d3, d4)));
+
+    do_scale = min < 0.1 * rect_scale;
+
+    f1 = vee(clicked_mouse, l1.normalized());
+    f2 = vee(clicked_mouse, l2.normalized());
+    f3 = vee(clicked_mouse, l3.normalized());
+    f4 = vee(clicked_mouse, l4.normalized());
+
+    min = std::min(f1, std::min(f2, std::min(f3, f4)));
+
+    do_rotate = !do_scale && min < 0.1 * rect_scale;
+
+    do_translate = !do_scale && !do_rotate;
+  } else {
+    do_scale = do_rotate = do_translate = false;
+  }
+}
+
+void mouseDragged(float m_x, float m_y) {
+  Point2D cur_mouse = Point2D(m_x, m_y);
+
+  if(do_translate) {
+    Dir2D disp = cur_mouse - clicked_mouse;
+    rect_pos = clicked_pos + disp;
+  }
+
+  if(do_scale) {
+    Point2D center = intersect(vee(p1, p3), vee(p2, p4));
+
+    rect_scale = (cur_mouse - center).magnitude() / (clicked_mouse - center).magnitude() * clicked_size;
+  }
+
+  if(do_rotate) {
+    Point2D center = intersect(vee(p1, p3), vee(p2, p4));
+
+    float a = std::atan2(cur_mouse.y - center.y, cur_mouse.x - center.x);
+    float b = std::atan2(clicked_mouse.y - center.y, clicked_mouse.x - center.x);
+
+    rect_angle = clicked_angle - (a - b);
+  }
+
+  //Assuming the angle (rect_angle), position (rect_pos), and scale (rect_scale) of the rectangle
+  //  have all been set above, the following code should rotate, shift and scale the shape correctly.
+  //It's still good to read through and make sure you understand how this works!
+
+  applyChanges();
+}
+
 //You shouldn't have to edit this, it updates the displayed verticies to match the computed p1, p2, p3, p4
 void updateVertices() {
   vertices[0] = p3.x;  //Top right x
@@ -331,17 +265,14 @@ void updateVertices() {
 void updateBrightness() {
   int pixelCount = img_w * img_h * 4;
 
-  unsigned char* data = new unsigned char[pixelCount];
+  img_data = new unsigned char[pixelCount];
 
   for(int i = 0; i < pixelCount; i += 4) {
-    data[i] = clamp((int)(brightness * img_data[i]), 0, 255);
-    data[i + 1] = clamp((int)(brightness * img_data[i + 1]), 0, 255);
-    data[i + 2] = clamp((int)(brightness * img_data[i + 2]), 0, 255);
-    data[i + 3] = 255;
+    img_data[i] = clamp((int)(brightness * img_cpy[i]), 0, 255);
+    img_data[i + 1] = clamp((int)(brightness * img_cpy[i + 1]), 0, 255);
+    img_data[i + 2] = clamp((int)(brightness * img_cpy[i + 2]), 0, 255);
+    img_data[i + 3] = 255;
   }
-
-  // Redraw the texture
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_w, img_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
 float rand(float min, float max) {
@@ -366,18 +297,16 @@ void minus_keyPressed() {
   std::cout << "Brightness decreased" << std::endl;
 }
 
-void g_keyPressed() {
-  gravity = !gravity;
-
-  std::cout << "Gravity: " << gravity << std::endl;
-}
-
 void q_keyPressed() {
   bg_r = rand(0, 1);
   bg_b = rand(0, 1);
   bg_g = rand(0, 1);
 
   std::cout << "Background randomized to (" << bg_r << "," << bg_g << "," << bg_b << ")" << std::endl;
+}
+
+void a_keyPressed() {
+  animating = !animating;
 }
 
 void r_keyPressed() {
@@ -492,7 +421,8 @@ int main(int argc, char* argv[]) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); //GL_LINEAR
   //TODO: TEST your understanding: Try GL_LINEAR instead of GL_NEAREST on the 4x4 test image. What is happening?
 
-  img_data = loadImage(img_w, img_h);
+  img_cpy = loadImage(img_w, img_h);
+  updateBrightness();
   printf("Loaded Image of size (%d,%d)\n", img_w, img_h);
   //memset(img_data,0,4*img_w*img_h); //Load all zeros
   //Load the texture into memory
@@ -505,7 +435,6 @@ int main(int argc, char* argv[]) {
   glGenVertexArrays(1, &vao); //Create a VAO
   glBindVertexArray(vao); //Bind the above created VAO to the current context
 
-
   //Allocate memory on the graphics card to store geometry (vertex buffer object)
   GLuint vbo;
   glGenBuffers(1, &vbo);  //Create 1 buffer called vbo
@@ -513,8 +442,6 @@ int main(int argc, char* argv[]) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW); //upload vertices to vbo
   //GL_STATIC_DRAW means we won't change the geometry, GL_DYNAMIC_DRAW = geometry changes infrequently
   //GL_STREAM_DRAW = geom. changes frequently.  This effects which types of GPU memory is used
-
-
   //Load the vertex Shader
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vertexSource, NULL);
@@ -550,7 +477,6 @@ int main(int argc, char* argv[]) {
 
   glUseProgram(shaderProgram); //Set the active shader (only one can be used at a time)
 
-
   //Tell OpenGL how to set fragment shader input 
 
   GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
@@ -572,6 +498,7 @@ int main(int argc, char* argv[]) {
   //Event Loop (Loop forever processing each event as fast as possible)
   SDL_Event windowEvent;
   bool done = false;
+
   while(!done) {
     while(SDL_PollEvent(&windowEvent)) {  //Process input events (e.g., mouse & keyboard)
       if(windowEvent.type == SDL_QUIT) done = true;
@@ -587,12 +514,27 @@ int main(int argc, char* argv[]) {
         minus_keyPressed();
       if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_EQUALS)
         plus_keyPressed();
-      if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_g)
-        g_keyPressed();
       if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_q)
         q_keyPressed();
+      if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_a)
+        a_keyPressed();
 
       SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN : 0); //Set to full screen 
+    }
+
+    // Manage animation
+    if(animating) {
+      rect_angle += 0.02f;
+      if(rect_angle > 3.14159f * 2.f) {
+        rect_angle = 0;
+      }
+      
+      rect_scale += 0.02f;
+      if(rect_scale > 5) {
+        rect_scale = 0.5f;
+      }
+
+      applyChanges();
     }
 
     int mx, my;
@@ -607,28 +549,19 @@ int main(int argc, char* argv[]) {
       mouse_dragging = false;
     }
 
-    // Handle gravity
-    if(gravity) {
-      velocity.y -= 0.02;
-      rect_pos = rect_pos - velocity;
-      updateVertices();
-    }
-
     // Clear the screen to grey
-    
     glClearColor(bg_r, bg_g, bg_b, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBindTexture(GL_TEXTURE_2D, tex0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_w, img_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBindVertexArray(vao);
     glUseProgram(shaderProgram);
-
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW); //upload vertices to vbo
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //Draw the two triangles (4 vertices) making up the square
-    //TODO: TEST your understanding: What shape do you expect to see if you change the above 4 to 3?  Guess, then try it!
-    
+
     char text[128];
     memset(text, 0, 128);
 
