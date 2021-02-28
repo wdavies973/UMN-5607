@@ -89,6 +89,13 @@ Pixel operator* (const Pixel& p, double f)
         ComponentScale(p.a, f));
 }
 
+Pixel operator- (const Pixel& p, const Pixel& q) {
+  return Pixel(
+    ComponentClamp(p.r - q.r),
+    ComponentClamp(p.g - q.g),
+    ComponentClamp(p.b - q.b),
+    ComponentClamp(p.a - q.a));
+}
 
 Pixel PixelLerp (const Pixel& p, const Pixel& q, double t)
 {

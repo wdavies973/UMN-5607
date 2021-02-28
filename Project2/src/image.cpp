@@ -47,8 +47,8 @@ Image::Image(const Image& src) {
 
   data.raw = new uint8_t[num_pixels * 4];
 
-  //memcpy(data.raw, src.data.raw, num_pixels);
-  *data.raw = *src.data.raw;
+  memcpy(data.raw, src.data.raw, num_pixels * 4);
+  //*data.raw = *src.data.raw;
 }
 
 Image::Image(char* fname) {
@@ -148,16 +148,16 @@ Image* Image::Crop(int x, int y, int w, int h) {
 // The factor is related to the standard deviation
 // of the normal distribution. This noise
 // is a bit cleaner than uniform noise, more
-// closely resembling the real picture.
+// closely resembling the real picture.d Des  
 void Image::AddNoise(double factor) {
   std::default_random_engine gen;
-  std::normal_distribution<double> dist(0, factor*10);
+  std::normal_distribution<double> dist(0, factor * 100);
 
   int x, y;
   for(x = 0; x < Width(); x++) {
     for(y = 0; y < Height(); y++) {
       Pixel p = GetPixel(x, y);
-      
+
       p.SetClamp(p.r + dist(gen), p.g + dist(gen), p.b + dist(gen));
 
       GetPixel(x, y) = p;
@@ -166,19 +166,37 @@ void Image::AddNoise(double factor) {
 }
 
 void Image::ChangeContrast(double factor) {
-  /* WORK HERE */
+  int x, y;
+  double luminance = 0;
+  for(x = 0; x < Width(); x++) {
+    for(y = 0; y < Height(); y++) {
+      Pixel p = GetPixel(x, y);
 
-
+      luminance += 0.3 * p.r + 0.59 * p.g + 0.11 * p.b;
+    }
+  }
+  luminance /= (Width() * Height());
+  for(x = 0; x < Width(); x++) {
+    for(y = 0; y < Height(); y++) {
+      SetPixel(x, y, PixelLerp(Pixel(luminance, luminance, luminance, 1), GetPixel(x, y), factor));
+    }
+  }
 }
 
 void Image::ChangeSaturation(double factor) {
-  /* WORK HERE */
+  for(int x = 0; x < Width(); x++) {
+    for(int y = 0; y < Height(); y++) {
+      Pixel p = GetPixel(x, y);
+      double luminance = 0.3 * p.r + 0.59 * p.g + 0.11 * p.b;
+      SetPixel(x, y, PixelLerp(Pixel(luminance, luminance, luminance, 1), GetPixel(x, y), factor));
+    }
+  }
 }
-
 
 //For full credit, check that your dithers aren't making the pictures systematically brighter or darker
 void Image::RandomDither(int nbits) {
-  /* WORK HERE */
+  AddNoise(0.4);
+  Quantize(nbits);
 }
 
 //This bayer method gives the quantization thresholds for an ordered dither.
@@ -192,9 +210,8 @@ static int Bayer4[4][4] = {
     { 0,  8,  2, 10}
 };
 
-
 void Image::OrderedDither(int nbits) {
-  /* WORK HERE */
+  Image* img_copy = new Image(*this);
 }
 
 /* Error-diffusion parameters */
@@ -205,33 +222,160 @@ GAMMA = 5.0 / 16.0,
 DELTA = 1.0 / 16.0;
 
 void Image::FloydSteinbergDither(int nbits) {
-  /* WORK HERE */
+  Image* img_copy = new Image(*this);
+
+  for(int y = 1; y < Height() - 1; y++) {
+    for(int x = 1; x < Width() - 1; x++) {
+      // Ref: https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
+      Pixel o = GetPixel(x, y);
+      Pixel n = PixelQuant(o, nbits);
+      SetPixel(x, y, n);
+      Pixel error = o - n;
+
+      GetPixel(x + 1, y) = GetPixel(x + 1, y) + (error * ALPHA);
+      GetPixel(x - 1, y + 1) = GetPixel(x - 1, y + 1) + (error * BETA);
+      GetPixel(x, y + 1) = GetPixel(x, y + 1) + (error * GAMMA);
+      GetPixel(x + 1, y + 1) = GetPixel(x + 1, y + 1) + (error * DELTA);
+    }
+  }
+
+  delete img_copy;
 }
 
-// Weighted average convolution
 void Image::Blur(int n) {
-  // float r, g, b; //I got better results converting everything to floats, then converting back to bytes
- // Image* img_copy = new Image(*this); //This is will copying the image, so you can read the orginal values for filtering (
-                                         //  ... don't forget to delete the copy!
- /* WORK HERE */
+  // Verify that n is positive and odd
+  if(n < 3 || n % 2 == 0) {
+    std::cerr << "Gaussian kernel matrix dimension must be positive and odd";
+    exit(-1);
+    return;
+  }
+
+  Image* img_copy = new Image(*this);
+  double* kernel = new double[n * n];
+  int r = n / 2;
+  double sigma = r / 3.0;
+  double c = 2 * sigma * sigma;
+  double sum = 0;
+
+  // 1) Create the Gaussian kernel
+  for(int i = 0; i < n; i++) {
+    for(int j = 0; j < n; j++) {
+      int x = j - r;
+      int y = i - r;
+
+      // Take the gaussian in each direction
+      double gx = std::exp(-x * x / c);
+      double gy = std::exp(-y * y / c);
+
+      kernel[i * n + j] = gx * gy;
+      sum += kernel[i * n + j];
+    }
+  }
+
+  // Normalize the Gaussian kernel to sum to one
+  for(int i = 0; i < n * n; i++) {
+    kernel[i] *= 1.0 / sum;
+  }
+
+  // Technically it would be better to do
+  // linear decomposition to get separable filters
+
+  // 2) Convolve the image
+  for(int y = 0; y < Height(); y++) {
+    for(int x = 0; x < Width(); x++) {
+      Pixel p;
+
+      for(int i = 0; i < n * n; i++) {
+        int row = i / n;
+        int col = i % n;
+
+        p = p + img_copy->GetPixelSafe(x - r + col, y - r + row) * kernel[i];
+      }
+
+      SetPixel(x, y, p);
+    }
+  }
+
+  delete img_copy;
 }
 
 void Image::Sharpen(int n) {
-  /* WORK HERE */
+  Image* img_copy = new Image(*this);
+  img_copy->Blur(n);
+
+  for(int y = 0; y < Height(); y++) {
+    for(int x = 0; x < Width(); x++) {
+      Pixel p = GetPixel(x, y);
+      p = p + (p - img_copy->GetPixel(x, y));
+      SetPixel(x, y, p);
+    }
+  }
+
+  delete img_copy;
 }
 
 void Image::EdgeDetect() {
-  /* WORK HERE */
+  Image* img_copy = new Image(*this);
+  int x, y;
+  for(x = 0; x < Width(); x++) {
+    for(y = 0; y < Height(); y++) {
+      Pixel point = GetPixel(x, y);
+      double average = (point.r + point.g + point.b) / 3.0;
+
+      img_copy->GetPixel(x, y).SetClamp(average, average, average);
+    }
+  }
+
+  double filter[9] = {
+    -1.0, -1.0, -1.0, -1.0, 8.0, -1.0, -1.0, -1.0, -1.0
+  };
+
+  for(x = 0; x < Width(); x++) {
+    for(y = 0; y < Height(); y++) {
+
+      Pixel p;
+
+      for(int i = 0; i < 9; i++) {
+        int row = i / 3;
+        int col = i % 3;
+
+        p = p + img_copy->GetPixelSafe(x - 1 + col, y - 1 + row) * filter[i];
+      }
+
+      SetPixel(x, y, p);
+    }
+  }
 }
 
 Image* Image::Scale(double sx, double sy) {
-  /* WORK HERE */
-  return NULL;
+  Image* img_copy = new Image((int)(sx * Width()), (int)(sy * Height()));
+  
+  for(int x = 0; x < (int)(Width() * sx); x++) {
+    for(int y = 0; y < (int)(Height() * sy); y++) {
+
+      img_copy->SetPixel(x, y, Sample(x / sx, y / sy));
+    }
+  }
+  return img_copy;
 }
 
 Image* Image::Rotate(double angle) {
-  /* WORK HERE */
-  return NULL;
+  Image* img_copy = new Image(Width(), Height());
+  double half_width = Width() / 2;
+  double half_height = Height() / 2;
+
+  for(int x = 0; x < Width(); x++) {
+    for(int y = 0; y < Height(); y++) {
+      double o = std::atan2(y - half_height, x - half_width);
+      double n = o - angle;
+      double z1 = y - half_height;
+      double z2 = x - half_width;
+      double s = std::sqrt(z1 * z1 + z2 * z2);
+
+      img_copy->SetPixelSafe(x, y, Sample(half_width + cos(n) * s, half_height + std::sin(n) * s));
+    }
+  }
+  return img_copy;
 }
 
 void Image::Fun() {
@@ -246,8 +390,29 @@ void Image::SetSamplingMethod(int method) {
   sampling_method = method;
 }
 
-
 Pixel Image::Sample(double u, double v) {
-  /* WORK HERE */
+  if(sampling_method == IMAGE_SAMPLING_POINT) {
+    Pixel closest = GetPixelSafe((int)u, (int)v);
+    return closest;
+  } else if(sampling_method == IMAGE_SAMPLING_BILINEAR) {
+    // Rows
+    Pixel top = PixelLerp(GetPixelSafe((int)u, (int)v), GetPixelSafe((int)std::ceil(u), (int)v), u - (int)u);
+    Pixel bottom = PixelLerp(GetPixelSafe((int)u, (int)std::ceil(v)), GetPixelSafe((int)std::ceil(u), (int)std::ceil(v)), u - (int)u);
+
+    // Interpolate vertically
+    return PixelLerp(top, bottom, v);
+  } else if(sampling_method == IMAGE_SAMPLING_GAUSSIAN) {
+    u *= width;
+    v *= height;
+    Pixel p(0, 0, 0, 255);
+    for(int x = u - 3; x < u + 3; x++) {
+      for(int y = v - 3; y < v + 3; y++) {
+        Pixel temp = GetPixelSafe(x, y);
+        double d = -(std::pow(u - x, 2) + std::pow(v - y, 2)) / 2;
+        p = p + (1.0 / (2 * 3.14159) * std::exp(d) * temp);
+      }
+    }
+    return p;
+  }
   return Pixel();
 }
