@@ -37,5 +37,6 @@
     <Text Include="models\sphere.txt" />
     <Text Include="models\teapot.txt" />
     <Text Include="models\triangle.txt" />
+    <Text Include="map2.txt" />
   </ItemGroup>
 </Project>

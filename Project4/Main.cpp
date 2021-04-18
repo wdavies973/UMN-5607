@@ -429,19 +429,19 @@ int main(int argc, char* argv[]) {
               hasA = false;
               map[row][col] = '0';
             }
-            else if(map[row][col] == 'B' && hasA) {
+            else if(map[row][col] == 'B' && hasB) {
               hasB = false;
               map[row][col] = '0';
             }
-            else if(map[row][col] == 'C' && hasA) {
+            else if(map[row][col] == 'C' && hasC) {
               hasC = false;
               map[row][col] = '0';
             }
-            else if(map[row][col] == 'D' && hasA) {
+            else if(map[row][col] == 'D' && hasD) {
               hasD = false;
               map[row][col] = '0';
             }
-            else if(map[row][col] == 'E' && hasA) {
+            else if(map[row][col] == 'E' && hasE) {
               hasE = false;
               map[row][col] = '0';
             }
@@ -561,7 +561,6 @@ int main(int argc, char* argv[]) {
 
       }
     }
-
 
     if(saveOutput) Win2PPM(screen_width, screen_height);
 

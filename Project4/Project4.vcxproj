@@ -168,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="map.txt" />
+    <Text Include="map2.txt" />
     <Text Include="models\info.txt" />
     <Text Include="models\knot.txt" />
     <Text Include="models\sphere.txt" />
