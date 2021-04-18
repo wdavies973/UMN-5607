@@ -32,5 +32,10 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="map.txt" />
+    <Text Include="models\info.txt" />
+    <Text Include="models\knot.txt" />
+    <Text Include="models\sphere.txt" />
+    <Text Include="models\teapot.txt" />
+    <Text Include="models\triangle.txt" />
   </ItemGroup>
 </Project>

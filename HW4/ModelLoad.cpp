@@ -78,14 +78,6 @@ char window_title[] = "My OpenGL Program";
 
 float avg_render_time = 0;
 
-// The player's position
-glm::vec3 playerPosition(3.f, 0.f, 0.f);
-glm::vec3 playerFacing(0.f, 0.f, 0.f);
-glm::vec3 playerUp(0.f, 0.f, 1.f);
-glm::vec3 playerVerticalVelocity(0.f, 0.f, 0.f);
-
-bool movingLeft = false, movingRight = false, movingForward = false, movingBack = false;
-
 void Win2PPM(int width, int height);
 
 int main(int argc, char *argv[]){
@@ -106,6 +98,8 @@ int main(int argc, char *argv[]){
 	//SDL_Window* window = SDL_CreateWindow(window_title, 100, 100, screen_width, screen_height, SDL_WINDOW_RESIZABLE|SDL_WINDOW_OPENGL);
 	//SDL_Window* window = SDL_CreateWindow(window_title,SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,0,0,SDL_WINDOW_FULLSCREEN_DESKTOP|SDL_WINDOW_OPENGL); //Boarderless window "fake" full screen
 
+
+	
 	//Create a context to draw in
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	
@@ -214,6 +208,7 @@ int main(int argc, char *argv[]){
   //  Set-up attributes ...
   //glBindVertexArray(0); //Unbind the VAO
 	
+
 	glEnable(GL_DEPTH_TEST);  
 	
 	//Event Loop (Loop forever processing each event as fast as possible)
