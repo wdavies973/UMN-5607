@@ -85,6 +85,8 @@ bool hasA = false, hasB = false, hasC = false, hasD = false, hasE = false;
 
 void Win2PPM(int width, int height);
 
+float powerUp = 1.f;
+
 char** loadMap(string path, int* width, int* height) {
   ifstream file;
   file.open(path);
@@ -271,8 +273,10 @@ int main(int argc, char* argv[]) {
   //Allocate memory on the graphics card to store geometry (vertex buffer object)
   float trisCube;
   GLuint* vaoCube = loadModel("models/cube.txt", shaderProgram, &trisCube);
+  float trisKnot;
+  GLuint* vaoKnot = loadModel("models/knot.txt", shaderProgram, &trisKnot);
   float trisTeapot;
-  GLuint* vaoTeapot = loadModel("models/knot.txt", shaderProgram, &trisTeapot);
+  GLuint* vaoTeapot = loadModel("models/teapot.txt", shaderProgram, &trisTeapot);
 
   glBindVertexArray(0); //Unbind the VAO
 
@@ -327,7 +331,9 @@ int main(int argc, char* argv[]) {
           movingRight = true;
           break;
         case SDLK_SPACE:
-          playerVerticalVelocity.z = 0.03;
+          if(playerPosition.z < 0.5) {
+            playerVerticalVelocity.z = 0.03;
+          }
           break;
         }
       } else if(windowEvent.type == SDL_KEYUP) {
@@ -380,12 +386,12 @@ int main(int argc, char* argv[]) {
 
     glm::vec3 unit = glm::normalize(playerFacing - playerPosition);
     unit.z = 0;
-    playerPosition += unit * at;
+    playerPosition += unit * at * powerUp;
     /*playerPosition = glm::vec3(playerFacing);
     playerPosition.x -= 3.f;*/
     glm::vec3 right = glm::normalize(glm::cross(playerFacing - playerPosition, playerUp));
     right.z = 0;
-    playerPosition += right * strafe;
+    playerPosition += right * strafe * powerUp;
 
     playerVerticalVelocity.z -= 0.1 * (delta / 1000.f);
 
@@ -393,51 +399,79 @@ int main(int argc, char* argv[]) {
 
     if(playerPosition.z < 0) playerPosition.z = 0;
 
-    int playerRow = (int)(playerPosition.x + 0.5);
-    int playerCol = (int)(playerPosition.y + 0.5);
-
-    //if(playerRow < 1 || map[playerRow - 1][playerCol] == 'W') {
-    //  if(playerPosition.x <= playerRow + 0.05) {
-    //    playerPosition.x = playerRow + 0.05;
-    //  }
-    //}
-
-    //if(playerRow >= mapHeight - 1 || map[playerRow + 1][playerCol] == 'W') {
-    //  if(playerPosition.x >= (playerRow + 1 - 0.95)) {
-    //    playerPosition.x = playerRow + 1 - 0.95;
-    //  }
-    //}
-
-    //if(playerCol < 1 || map[playerRow][playerCol - 1] == 'W') {
-    //  if(playerPosition.y <= playerCol + 0.05) {
-    //    playerPosition.y = playerCol + 0.05;
-    //  }
-    //}
-
-    //if(playerCol >= mapWidth - 1 || map[playerRow][playerCol + 1] == 'W') {
-    //  if(playerPosition.y >= (playerCol + 1 - 0.95)) {
-    //    playerPosition.y = playerCol + 1 - 0.95;
-    //  }
-    //}
-
-
     for(int row = 0; row < mapHeight; row++) {
       for(int col = 0; col < mapWidth; col++) {
-        if(map[row][col] != '0' && map[row][col] != 'S' && map[row][col] != 'G') {
+        if(map[row][col] != '0' && map[row][col] != 'S') {
 
           // Check if the player is colliding 
           if(playerPosition.x > row - 0.55 && playerPosition.x < row + 0.55 && playerPosition.y > col - 0.55 && playerPosition.y < col + 0.55) {
-            if(std::abs(playerPosition.x - row) < std::abs(playerPosition.y - col)) {
-              if(playerPosition.y > col - 0.55 && playerPosition.y < col) {
-                playerPosition.y = col - 0.56;
-              } else if(playerPosition.y < col + 0.55 && playerPosition.y > col) {
-                playerPosition.y = col + 0.56;
+            if(map[row][col] == 'a') {
+              hasA = true;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'b') {
+              hasB = true;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'c') {
+              hasC = true;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'd') {
+              hasD = true;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'e') {
+              hasE = true;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'A' && hasA) {
+              hasA = false;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'B' && hasA) {
+              hasB = false;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'C' && hasA) {
+              hasC = false;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'D' && hasA) {
+              hasD = false;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'E' && hasA) {
+              hasE = false;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'P') {
+              powerUp += 1.f;
+              map[row][col] = '0';
+            }
+            else if(map[row][col] == 'G') {
+              // Move player back to the start
+              for(int row2 = 0; row2 < mapHeight; row2++) {
+                for(int col2 = 0; col2 < mapWidth; col2++) {
+                  if(map[row2][col2] == 'S') {
+                    playerPosition.x = row2;
+                    playerPosition.y = col2;
+                  }
+                }
               }
             } else {
-              if(playerPosition.x < row + 0.55 && playerPosition.x > row) {
-                playerPosition.x = row + 0.56;
-              } else if(playerPosition.x > row - 0.55 && playerPosition.x < row) {
-                playerPosition.x = row - 0.56;
+              if(std::abs(playerPosition.x - row) < std::abs(playerPosition.y - col)) {
+                if(playerPosition.y > col - 0.55 && playerPosition.y < col) {
+                  playerPosition.y = col - 0.56;
+                } else if(playerPosition.y < col + 0.55 && playerPosition.y > col) {
+                  playerPosition.y = col + 0.56;
+                }
+              } else {
+                if(playerPosition.x < row + 0.55 && playerPosition.x > row) {
+                  playerPosition.x = row + 0.56;
+                } else if(playerPosition.x > row - 0.55 && playerPosition.x < row) {
+                  playerPosition.x = row - 0.56;
+                }
               }
             }
           }
@@ -473,27 +507,16 @@ int main(int argc, char* argv[]) {
     glm::vec3 key = playerPosition + glm::normalize(playerFacing) * 0.5f;
 
     if(hasA) {
-      renderModel(&uniModel, &colorView, vaoTeapot, key.x, key.y, 0.2, trisTeapot, 1.f, glm::vec3(0.7f, 0.7f, 0.0f));
+      renderModel(&uniModel, &colorView, vaoKnot, key.x, key.y, 0.2, trisKnot, .25f, glm::vec3(0.f, 0.7f, 0.0f));
     } else if(hasB) {
-      renderModel(&uniModel, &colorView, vaoTeapot, key.x, key.y, 0.2, trisTeapot, 1.f, glm::vec3(0.7f, 0.0f, 0.0f));
+      renderModel(&uniModel, &colorView, vaoKnot, key.x, key.y, 0.2, trisKnot, .25f, glm::vec3(0.7f, 0.0f, 0.0f));
     } else if(hasC) {
-      renderModel(&uniModel, &colorView, vaoTeapot, key.x, key.y, 0.2, trisTeapot, 1.f, glm::vec3(0.0f, 0.7f, 0.7f));
+      renderModel(&uniModel, &colorView, vaoKnot, key.x, key.y, 0.2, trisKnot, .25f, glm::vec3(0.0f, 0.7f, 0.7f));
     } else if(hasD) {
-      renderModel(&uniModel, &colorView, vaoTeapot, key.x, key.y, 0.2, trisTeapot, 1.f, glm::vec3(0.35f, 0.7f, 0.25f));
+      renderModel(&uniModel, &colorView, vaoKnot, key.x, key.y, 0.2, trisKnot, .25f, glm::vec3(0.35f, 0.7f, 0.25f));
     } else if(hasE) {
-      renderModel(&uniModel, &colorView, vaoTeapot, key.x, key.y, 0.2, trisTeapot, 1.f, glm::vec3(0.7f, 0.35f, 0.65f));
+      renderModel(&uniModel, &colorView, vaoKnot, key.x, key.y, 0.2, trisKnot, 1.25f, glm::vec3(0.7f, 0.35f, 0.65f));
     }
-
-    // Draw all perimeter walls
-    //for(int col = 0; col < mapWidth; col++) {
-    //  renderModel(&uniModel, &colorView, vaoCube, -1, col, 0, trisCube, glm::vec3(0.7f, 0.7f, 0.0f));
-    //  renderModel(&uniModel, &colorView, vaoCube, mapHeight, col, 0, trisCube, glm::vec3(0.7f, 0.7f, 0.0f));
-    //}
-
-    //for(int row = 0; row < mapHeight; row++) {
-    //  renderModel(&uniModel, &colorView, vaoCube, row, -1, 0, trisCube, glm::vec3(0.7f, 0.7f, 0.0f));
-    //  renderModel(&uniModel, &colorView, vaoCube, row, mapWidth, 0, trisCube, glm::vec3(0.7f, 0.7f, 0.0f));
-    //}
 
     // Draw walls, each wall can be drawn as a block.
     // Each block is 1x1.
@@ -514,23 +537,18 @@ int main(int argc, char* argv[]) {
         } else if(map[row][col] == 'E') {
           renderModel(&uniModel, &colorView, vaoCube, row, col, 0, trisCube, 1.f, glm::vec3(0.7f, 0.35f, 0.65f));
         } else if(map[row][col] == 'a' && !hasA) {
-          renderModel(&uniModel, &colorView, vaoTeapot, row, col, 0, trisTeapot, 0.25f, glm::vec3(0.0f, 0.7f, 0.0f));
+          renderModel(&uniModel, &colorView, vaoKnot, row, col, 0, trisKnot, 0.25f, glm::vec3(0.0f, 0.7f, 0.0f));
         } else if(map[row][col] == 'b' && !hasB) {
-          renderModel(&uniModel, &colorView, vaoTeapot, row, col, 0, trisTeapot, 0.25f, glm::vec3(0.7f, 0.0f, 0.0f));
+          renderModel(&uniModel, &colorView, vaoKnot, row, col, 0, trisKnot, 0.25f, glm::vec3(0.7f, 0.0f, 0.0f));
         } else if(map[row][col] == 'c' && !hasC) {
-          renderModel(&uniModel, &colorView, vaoTeapot, row, col, 0, trisTeapot, 0.25f, glm::vec3(0.0f, 0.7f, 0.7f));
+          renderModel(&uniModel, &colorView, vaoKnot, row, col, 0, trisKnot, 0.25f, glm::vec3(0.0f, 0.7f, 0.7f));
         } else if(map[row][col] == 'd' && !hasD) {
-          renderModel(&uniModel, &colorView, vaoTeapot, row, col, 0, trisTeapot, 0.25f, glm::vec3(0.35f, 0.7f, 0.25f));
+          renderModel(&uniModel, &colorView, vaoKnot, row, col, 0, trisKnot, 0.25f, glm::vec3(0.35f, 0.7f, 0.25f));
         } else if(map[row][col] == 'e' && !hasE) {
-          renderModel(&uniModel, &colorView, vaoTeapot, row, col, 0, trisTeapot, 0.25f, glm::vec3(0.7f, 0.35f, 0.65f));
+          renderModel(&uniModel, &colorView, vaoKnot, row, col, 0, trisKnot, 0.25f, glm::vec3(0.7f, 0.35f, 0.65f));
+        } else if(map[row][col] == 'P') {
+          renderModel(&uniModel, &colorView, vaoTeapot, row, col, 0, trisTeapot, 0.25f, glm::vec3(0.7f, 0.6f, 0.2f));
         }
-
-        /*if(map[row][col] == 'A') {
-          glBindVertexArray(*vaoTeapot);
-          glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(row, col, 0.f));
-          glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
-          glDrawArrays(GL_TRIANGLES, 0, trisTeapot);
-        }*/
 
         // Floor
         if(map[row][col] == 'S') {
